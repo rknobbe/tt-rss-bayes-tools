@@ -61,7 +61,9 @@ sub learn() {
 #learn from feeds
 	print "Learning: ", $ham_cat,"\n";
 	learn_cat($ham_cat, $ham_label, "all_articles");
+	print "Learning: ", $spam_cat,"\n";
 	learn_cat($spam_cat, $spam_label, "all_articles");
+	print "Learning: (read)", $spam_cat,"\n";
 	learn_cat($spam_cat, -6, "all_articles"); #recently read
 
 	$c->crunch();
@@ -171,15 +173,17 @@ if ($opt_h) {
 
 init_db();
 login();
-unless ($opt_l) {print "not learning\n"};
 if ($opt_l) {
 	learn();
+} else {
+	print "not learning\n";
 }
-unless ($opt_s) {print "not scoring\n"};
 if ($opt_s){
 	score($ham_cat, $ham_label, "unread");
 	score($spam_cat, $spam_label, "unread");
-}
+} else {
+	print "not scoring\n";
+};
 
 # Save machine for later use
 $c->save_state($opt_d);
