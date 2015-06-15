@@ -2,7 +2,7 @@
 
 #Dependencies
 This works with a running instance of http://tt-rss.org/
-Requires you have downloaded and installed AI::Categorize (not AI::Categories!)
+Requires you have downloaded and installed AI::Categorize (not AI::Categories!) https://github.com/gitpan/AI-Categorize
 
 #Concepts
 
