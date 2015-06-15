@@ -17,6 +17,7 @@ $opt_l = 0; # 1 = don't learn
 $opt_s = 0; # 1 = don't score
 $opt_h = 0;
 
+my %all_labels; # save all categories and labels
 my $ham_cat  = "!! INTERESTING";
 my $ham_label = 0; # query from API
 my $spam_cat = "!! UNINTERESTING";
@@ -48,7 +49,9 @@ sub learn_cat {
             view_mode => $mode,
             include_attachments => JSON::PP::false});
         # Loop through the array to build a list of article ids.
+	print "Learning from labled '$cat'\n";
         foreach my $art (@{$resp->{content}} ){
+		print "Title:", $art->{"title"},"\n";
 		$c->add_document($art->{id}, $cat, $hs->parse($art->{content}));
 	}
 }
@@ -59,12 +62,17 @@ sub learn() {
 	$c->stopwords('the','a','and','but','I');  # Ignore these words
 
 #learn from feeds
-	print "Learning: ", $ham_cat,"\n";
-	learn_cat($ham_cat, $ham_label, "all_articles");
-	print "Learning: ", $spam_cat,"\n";
-	learn_cat($spam_cat, $spam_label, "all_articles");
-	print "Learning: (read)", $spam_cat,"\n";
-	learn_cat($spam_cat, -6, "all_articles"); #recently read
+	#print "Learning: ", $ham_cat,"\n";
+	#learn_cat($ham_cat, $ham_label, "all_articles");
+	#print "Learning: ", $spam_cat,"\n";
+	#learn_cat($spam_cat, $spam_label, "all_articles");
+	#print "Learning: (read)", $spam_cat,"\n";
+	#learn_cat($spam_cat, -6, "all_articles"); #recently read
+	my $lbl;
+	my $val;
+	while (($lbl,$val) = each (%all_labels)) {
+		learn_cat($lbl, $val, "all_articles");
+	}
 
 	$c->crunch();
 
@@ -81,7 +89,8 @@ sub score {
             show_content => JSON::PP::true,
             view_mode => $mode,
             include_attachments => JSON::PP::false});
-        # Loop through the array to build a list of article ids.
+        # Loop through headlines, categorizing by parsed content
+	print "Scoring $mode '$cat'\n";
         foreach my $art (@{$resp->{content}} ){
 		my $res = $c->categorize($hs->parse($art->{content}));
 		if ($res->in_category($cat)) {
@@ -132,6 +141,8 @@ sub tag() {
 sub findTags {
 	my $resp = fetch_json("getLabels", {sid => $session, op => 'getLabels'});
 	foreach  my $labels ( values $resp->{content} ) {
+		$all_labels{$labels->{"caption"}} = $labels->{"id"};
+
 		if ($labels->{"caption"} eq $ham_cat) {
 			$ham_label = $labels->{"id"};
 			#print $labels->{"caption"},":", $labels->{"id"},"\n";
@@ -179,8 +190,13 @@ if ($opt_l) {
 	print "not learning\n";
 }
 if ($opt_s){
-	score($ham_cat, $ham_label, "unread");
-	score($spam_cat, $spam_label, "unread");
+	my $lbl;
+	my $val;
+	while (($lbl,$val) = each (%all_labels)) {
+		score($lbl, $val, "unread");
+	}
+	#score($ham_cat, $ham_label, "unread");
+	#score($spam_cat, $spam_label, "unread");
 } else {
 	print "not scoring\n";
 };
