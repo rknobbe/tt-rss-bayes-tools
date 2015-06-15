@@ -17,4 +17,5 @@ Current script doesn't use authentication.  See the API description https://tt-r
 
 #Usage
 $ feedapi.pl -h
+
 $ feedapi.pl -l -s
